@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dtap": {"value": "development"},
+    "ring": {"value": 100},
+    "location": { "value": "West Europe" },
+    "vnet-name": { "value": "pat-devtest-spoke-vnet" },
+    "vnet-prefix": { "value": "10.0.16.0/20" },
+    "admin-subnet-name": { "value": "admin" },
+    "workload1-subnet-name": { "value": "sqlmilab" },
+    "admin-subnet-prefix": { "value": "10.0.16.0/24" },
+    "workload1-subnet-prefix": { "value": "10.0.17.0/24" }
+  }
+}
