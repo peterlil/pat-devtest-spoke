@@ -1277,18 +1277,39 @@
               "contentVersion": "1.0.0.0",
               "resources": [
                   {
-                      "type": "Microsoft.Network/virtualNetworks/subnets",
-                      "name": "[concat(parameters('vnet-name'), '/', parameters('sql-mi-lab-subnet-name'))]",
-                      "apiVersion": "2018-04-01",
-                      "properties": {
-                          "addressPrefix": "[reference(resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', parameters('vnet-name'), parameters('sql-mi-lab-subnet-name')), '2018-04-01').addressPrefix]",
-                          "routeTable": {
-                              "id": "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]"
-                          },
-                          "networkSecurityGroup": {
-                              "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+                    "name": "[parameters('vnet-name')]",
+                    "type": "Microsoft.Network/virtualNetworks",
+                    "apiVersion": "2018-11-01",
+                    "tags": {
+                      "dtap": "[parameters('dtap')]"
+                    },
+                    "properties": {
+                      "addressSpace": {
+                        "addressPrefixes": [
+                          "[parameters('vnet-prefix')]"
+                        ]
+                      },
+                      "subnets": [
+                        {
+                          "name": "[parameters('admin-subnet-name')]",
+                          "properties": {
+                            "addressPrefix": "[parameters('admin-subnet-prefix')]"
                           }
-                      }
+                        },
+                        {
+                          "name": "[parameters('sql-mi-lab-subnet-name')]",
+                          "properties": {
+                            "addressPrefix": "[parameters('sql-mi-lab-subnet-prefix')]",
+                            "routeTable": {
+                              "id": "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]"
+                            },
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+                            }
+                          }
+                        }
+                      ]
+                    }
                   }
               ]
           }
