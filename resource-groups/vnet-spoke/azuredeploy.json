@@ -1228,8 +1228,8 @@
                           "protocol": "[variables('unionNSGs')[copyIndex('securityRules')].properties.protocol]",
                           "sourcePortRange": "[variables('unionNSGs')[copyIndex('securityRules')].properties.sourcePortRange]",
                           "[if(contains(variables('unionNSGs')[copyIndex('securityRules')].properties, 'destinationPortRange'), 'destinationPortRange', 'destinationPortRanges')]": "[if(contains(variables('unionNSGs')[copyIndex('securityRules')].properties, 'destinationPortRange'), variables('unionNSGs')[copyIndex('securityRules')].properties.destinationPortRange, variables('unionNSGs')[copyIndex('securityRules')].properties.destinationPortRanges)]",
-                          "sourceAddressPrefix": "[replace(variables('unionNSGs')[copyIndex('securityRules')].properties.sourceAddressPrefix, '<subnet_range>', reference(resourceId(resourseGroup().name, 'Microsoft.Network/virtualNetworks/subnets', parameters('vnet-name'), parameters('sql-mi-lab-subnet-name')), '2017-10-01').addressPrefix)]",
-                          "destinationAddressPrefix": "[replace(variables('unionNSGs')[copyIndex('securityRules')].properties.destinationAddressPrefix, '<subnet_range>', reference(resourceId(resourseGroup().name, 'Microsoft.Network/virtualNetworks/subnets', parameters('vnet-name'), parameters('sql-mi-lab-subnet-name')), '2017-10-01').addressPrefix)]",
+                          "sourceAddressPrefix": "[replace(variables('unionNSGs')[copyIndex('securityRules')].properties.sourceAddressPrefix, '<subnet_range>', reference(resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', parameters('vnet-name'), parameters('sql-mi-lab-subnet-name')), '2017-10-01').addressPrefix)]",
+                          "destinationAddressPrefix": "[replace(variables('unionNSGs')[copyIndex('securityRules')].properties.destinationAddressPrefix, '<subnet_range>', reference(resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', parameters('vnet-name'), parameters('sql-mi-lab-subnet-name')), '2017-10-01').addressPrefix)]",
                           "access": "[variables('unionNSGs')[copyIndex('securityRules')].properties.access]",
                           "priority": "[variables('unionNSGs')[copyIndex('securityRules')].properties.priority]",
                           "direction": "[variables('unionNSGs')[copyIndex('securityRules')].properties.direction]"
@@ -1253,7 +1253,7 @@
                   "input": {
                       "name": "[variables('routesUnion')[copyIndex('routes')].name]",
                       "properties": {
-                          "addressPrefix": "[replace(variables('routesUnion')[copyIndex('routes')].properties.addressPrefix, '<subnet_range>', reference(resourceId(resourseGroup().name, 'Microsoft.Network/virtualNetworks/subnets', parameters('vnet-name'), parameters('sql-mi-lab-subnet-name')), '2017-10-01').addressPrefix)]",
+                          "addressPrefix": "[replace(variables('routesUnion')[copyIndex('routes')].properties.addressPrefix, '<subnet_range>', reference(resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', parameters('vnet-name'), parameters('sql-mi-lab-subnet-name')), '2017-10-01').addressPrefix)]",
                           "nextHopType": "[variables('routesUnion')[copyIndex('routes')].properties.nextHopType]"
                       }
                   }
