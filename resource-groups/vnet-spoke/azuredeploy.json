@@ -1265,7 +1265,7 @@
       "apiVersion": "2017-05-10",
       "name": "updateSubnetTemplate",
       "type": "Microsoft.Resources/deployments",
-      "resourceGroup": "[parameters('virtualNetworkResourceGroupName')]",
+      "resourceGroup": "[resourceGroup().name]",
       "dependsOn": [
           "[variables('routeTableName')]",
           "[variables('networkSecurityGroupName')]"
@@ -1281,7 +1281,7 @@
                       "name": "[concat(parameters('vnet-name'), '/', parameters('sql-mi-lab-subnet-name'))]",
                       "apiVersion": "2018-04-01",
                       "properties": {
-                          "addressPrefix": "[reference(resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('vnet-name'), parameters('sql-mi-lab-subnet-name')), '2018-04-01').addressPrefix]",
+                          "addressPrefix": "[reference(resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', parameters('vnet-name'), parameters('sql-mi-lab-subnet-name')), '2018-04-01').addressPrefix]",
                           "routeTable": {
                               "id": "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]"
                           },
