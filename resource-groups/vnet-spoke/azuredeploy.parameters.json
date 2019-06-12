@@ -13,6 +13,9 @@
     "sql-mi-lab-subnet-prefix": { "value": "10.0.17.0/24" },
     "sql-mi-name": {
         "value": "dev-sql-mi-peterlil"
+    },
+    "publicDataEndpointEnabled": {
+        "value": false
     }
   }
 }

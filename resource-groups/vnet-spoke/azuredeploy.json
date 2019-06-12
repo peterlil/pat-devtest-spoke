@@ -37,6 +37,10 @@
     },
     "sql-mi-name": {
       "type": "string"
+    },
+    "publicDataEndpointEnabled": {
+        "type": "bool",
+        "defaultValue": false
     }
   },
   "variables": {
