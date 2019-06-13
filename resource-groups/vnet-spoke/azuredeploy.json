@@ -1280,7 +1280,7 @@
                     "name": "[parameters('vnet-name')]",
                     "type": "Microsoft.Network/virtualNetworks",
                     "apiVersion": "2018-11-01",
-                    "location": "[parameters('location']",
+                    "location": "[parameters('location')]",
                     "tags": {
                       "dtap": "[parameters('dtap')]"
                     },
