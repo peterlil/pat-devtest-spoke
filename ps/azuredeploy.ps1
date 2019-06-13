@@ -249,6 +249,11 @@ function ParseMacro {
 }
 
 ###############################################################################
+# Set verbose
+###############################################################################
+$VerbosePreference = "continue"
+
+###############################################################################
 # Dump the parameters
 ###############################################################################
 Write-Verbose ""
@@ -302,14 +307,17 @@ $logMsg = "";
 Foreach ($file in $scriptFiles) {
     # Parse out the ordinal number (execution order)
     $orderNoPattern = "(?<=pipeline-)[0-9]{3,3}(?=[\w\s-_.]*.ps1$)"
-    $orderNo = [System.Text.RegularExpressions.Regex]::Match($file.FullName, $orderNoPattern).Value
-    $logMsg = "$($orderNo) - $file"
-    Write-Verbose "Script: $logMsg"
-
-    $item = New-Object -TypeName System.Object
-    $item | Add-Member -MemberType NoteProperty -Name Path -Value $file.FullName
-    $item | Add-Member -MemberType NoteProperty -Name Ring -Value $orderNo
-    $unsortedList += $item
+    $match = [System.Text.RegularExpressions.Regex]::Match($file.FullName, $orderNoPattern)
+    if( $match.Success -eq $true ) {
+        $orderNo = $match.Value
+        $logMsg = "$($orderNo) - $file"
+        Write-Verbose "Script: $logMsg"
+    
+        $item = New-Object -TypeName System.Object
+        $item | Add-Member -MemberType NoteProperty -Name Path -Value $file.FullName
+        $item | Add-Member -MemberType NoteProperty -Name Ring -Value $orderNo
+        $unsortedList += $item
+    }
 }
 
 $sortedRunlist = $unsortedList | Sort-Object -Property Ring
