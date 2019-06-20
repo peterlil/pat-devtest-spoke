@@ -91,26 +91,26 @@ function deployTemplate($fullPath, $SourceVersion) {
     # Make sure the resource group exists
     $location = $params.parameters.location.value
     Write-Host "Checking if Resource Group $($rgName) exists"
-    $rg = Get-AzureRmResourceGroup -Name $rgName -ErrorAction SilentlyContinue
+    $rg = Get-AzResourceGroup -Name $rgName -ErrorAction SilentlyContinue
     if($rg) {
         Write-Host "Resource group $($rgName) already exists, no need to create."
     } else {
         Write-Host "Creating resource group $($rgName)"
-        $rg = New-AzureRmResourceGroup -Name $rgName -Location $location -ErrorAction Stop
+        $rg = New-AzResourceGroup -Name $rgName -Location $location -ErrorAction Stop
     }
     Write-Verbose $jsonTemplateFileName
     Write-Verbose $jsonParameterFullFileName
 
     $ErrorMessages = @()
     if ($WhatIf -eq $true) {
-        $ErrorMessages = Format-ValidationOutput ( Test-AzureRmResourceGroupDeployment `
+        $ErrorMessages = Format-ValidationOutput ( Test-AzResourceGroupDeployment `
             -ResourceGroupName $rgName `
             -TemplateFile $jsonTemplateFileName `
             -TemplateParameterObject $dynamicParams `
             -Verbose)
     } else {
         $deployName = "$($rgName)-$($SourceVersion)"
-        New-AzureRmResourceGroupDeployment -Name $deployName `
+        New-AzResourceGroupDeployment -Name $deployName `
             -ResourceGroupName $rgName `
             -Mode Incremental `
             -TemplateFile $jsonTemplateFileName `
@@ -144,12 +144,12 @@ function New-Macro {
 }
 
 function GetSubscriptionId {
-    $context = Get-AzureRmContext
+    $context = Get-AzContext
     return $context.Subscription.Id
 }
 
 function GetTenantId {
-    $context = Get-AzureRmContext
+    $context = Get-AzContext
     return $context.Tenant.Id
 }
 
