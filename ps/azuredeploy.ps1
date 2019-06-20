@@ -91,26 +91,26 @@ function deployTemplate($fullPath, $SourceVersion) {
     # Make sure the resource group exists
     $location = $params.parameters.location.value
     Write-Host "Checking if Resource Group $($rgName) exists"
-    $rg = Get-AzResourceGroup -Name $rgName -ErrorAction SilentlyContinue
+    $rg = Get-AzureRmResourceGroup -Name $rgName -ErrorAction SilentlyContinue
     if($rg) {
         Write-Host "Resource group $($rgName) already exists, no need to create."
     } else {
         Write-Host "Creating resource group $($rgName)"
-        $rg = New-AzResourceGroup -Name $rgName -Location $location -ErrorAction Stop
+        $rg = New-AzureRmResourceGroup -Name $rgName -Location $location -ErrorAction Stop
     }
     Write-Verbose $jsonTemplateFileName
     Write-Verbose $jsonParameterFullFileName
 
     $ErrorMessages = @()
     if ($WhatIf -eq $true) {
-        $ErrorMessages = Format-ValidationOutput ( Test-AzResourceGroupDeployment `
+        $ErrorMessages = Format-ValidationOutput ( Test-AzureRmResourceGroupDeployment `
             -ResourceGroupName $rgName `
             -TemplateFile $jsonTemplateFileName `
             -TemplateParameterObject $dynamicParams `
             -Verbose)
     } else {
         $deployName = "$($rgName)-$($SourceVersion)"
-        New-AzResourceGroupDeployment -Name $deployName `
+        New-AzureRmResourceGroupDeployment -Name $deployName `
             -ResourceGroupName $rgName `
             -Mode Incremental `
             -TemplateFile $jsonTemplateFileName `
@@ -144,12 +144,12 @@ function New-Macro {
 }
 
 function GetSubscriptionId {
-    $context = Get-AzContext
+    $context = Get-AzureRmContext
     return $context.Subscription.Id
 }
 
 function GetTenantId {
-    $context = Get-AzContext
+    $context = Get-AzureRmContext
     return $context.Tenant.Id
 }
 
@@ -217,8 +217,8 @@ Function GetKeyVaultSecret {
     } else {
         switch($secretReturnType.Value.ToLower())
         {
-            "secretvaluetext" {(Get-AzureKeyVaultSecret -ResourceId ($resourceIdMatch.Value) -Name ($secretNameMatch.Value)).SecretValueText}
-            "secretvalue" {(Get-AzureKeyVaultSecret -ResourceId ($resourceIdMatch.Value) -Name ($secretNameMatch.Value)).SecretValue}
+            "secretvaluetext" {(Get-AzureureKeyVaultSecret -ResourceId ($resourceIdMatch.Value) -Name ($secretNameMatch.Value)).SecretValueText}
+            "secretvalue" {(Get-AzureureKeyVaultSecret -ResourceId ($resourceIdMatch.Value) -Name ($secretNameMatch.Value)).SecretValue}
         }
     }
 
