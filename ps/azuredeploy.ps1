@@ -56,23 +56,31 @@ function deployTemplate($fullPath, $SourceVersion) {
     Write-Verbose "Finding macros"
     # Loop through, find all macros and parse them
     $reFindMacros = "(?<="")#[\w\s/\[\]#-.]+#(?="")"
-    $parsedMacros = @()
+    $parsedMacros = @(@())
     $matches = [System.Text.RegularExpressions.Regex]::Matches($pfContent, $reFindMacros)
     $matches | ForEach-Object {
         #$_.Value #debug
         Write-Verbose "Found macro: $($_.Value)"
-        $macro = New-Macro -Unparsed $_.Value
+        $macro = @($_.Value, $null, $null)
         ParseMacro ([ref]$macro)
         #$macro | format-list * #debug
-        $parsedMacros += $macro
+        $parsedMacros += ,$macro
     }
     
-    Write-Verbose "Replacing macros"
-    # Replace all macros
-    $parsedMacros | ForEach-Object {
-        $pfContent = $pfContent.Replace($_.Unparsed, $_.Parsed)
-    }
-    
+#    Write-Verbose "Replacing macros"
+#    $secureStringParameters = @()
+#    # Replace all macros
+#    for ($i=0; $i -lt $parsedMacros.Count; $i++) {
+#        #Write-Verbose "Unparsed: $($parsedMacros[$i][0])"
+#        if($parsedMacros[$i][2].GetType().Name -eq 'SecureString') {
+#            $secureStringParameters += 
+#        } else {
+#            $pfContent = $pfContent.Replace($parsedMacros[$i][0], $parsedMacros[$i][2])
+#        }
+#    }
+#    $pfContent
+#    break
+
     Write-Verbose "Creating json object"
     # Convert final parameter file to json object
     $params = ($pfContent | ConvertFrom-Json)
@@ -82,12 +90,30 @@ function deployTemplate($fullPath, $SourceVersion) {
     }
 
     Write-Verbose "Preparing parameter object"
-     # Prepare the TemplateParameterObject
-     $dynamicParams = @{ }
+    # Prepare the TemplateParameterObject
+    $dynamicParams = @{ }
     $params.parameters | Get-ObjectMembers | ForEach-Object {
-        $dynamicParams.Add($_.Key, $_.value)
+        $isMacro = $false
+        if ($_.value.GetType().Name -eq 'String') {
+            if($_.value.StartsWith("#") -and $_.value.EndsWith("#")) {
+                $param = $_
+                $parsedMacros | ForEach-Object {
+                    if($param.value -eq $_[0]) {
+                        Write-Verbose "Replacing $($param.Key) with macro"
+                        $isMacro = $true
+                        $dynamicParams.Add($param.Key, $_[2])
+                    }
+                }
+            }
+        }
+        if($isMacro -eq $false) {
+            Write-Verbose "Adding $($_.Key):$($_.value) - $($_.value.GetType())"
+            $dynamicParams.Add($_.Key, $_.value)
+        } else {
+            $isMacro = $false
+        }
     }
-
+    
     # Make sure the resource group exists
     $location = $params.parameters.location.value
     Write-Host "Checking if Resource Group $($rgName) exists"
@@ -100,7 +126,7 @@ function deployTemplate($fullPath, $SourceVersion) {
     }
     Write-Verbose $jsonTemplateFileName
     Write-Verbose $jsonParameterFullFileName
-
+    
     $ErrorMessages = @()
     if ($WhatIf -eq $true) {
         $ErrorMessages = Format-ValidationOutput ( Test-AzureRmResourceGroupDeployment `
@@ -132,17 +158,6 @@ function deployTemplate($fullPath, $SourceVersion) {
 # Macro replacement
 ###############################################################################
 
-function New-Macro {
-    Param (
-        [parameter(mandatory=$true)]$Unparsed
-    )
-    $macro = New-Object PSObject
-    $macro | Add-Member -Type NoteProperty -Name Parsed -Value $null
-    $macro | Add-Member -Type NoteProperty -Name Unparsed -Value $Unparsed
-    $macro | Add-Member -Type NoteProperty -Name SemiParsed -Value $null
-    return $macro
-}
-
 function GetSubscriptionId {
     $context = Get-AzureRmContext
     return $context.Subscription.Id
@@ -160,7 +175,7 @@ function ParseGlobalMacro {
         
     # Prepare global macros (RegEx search strings)
     $globalMacros = @("\[tenantid\]", "\[subscriptionid\]")
-    $iWorkString = if($macro.Value.SemiParsed) {$macro.Value.SemiParsed} else {$macro.Value.Unparsed}
+    $iWorkString = if($macro.Value[1]) {$macro.Value[1]} else {$macro.Value[0]}
     
     for ($i=0; $i -lt $globalMacros.Count; $i++) {
         # Find global macro in string
@@ -188,8 +203,8 @@ function ParseGlobalMacro {
             $iWorkString = -join ($beginning, $replacementString, $end)
         }
     }
-    $macro.Value.Parsed = $iWorkString
-    $macro.Value.SemiParsed = $iWorkString
+    $macro.Value[2] = $iWorkString
+    $macro.Value[1] = $iWorkString
 }
 
 Function GetKeyVaultSecret {
@@ -217,8 +232,8 @@ Function GetKeyVaultSecret {
     } else {
         switch($secretReturnType.Value.ToLower())
         {
-            "secretvaluetext" {(Get-AzureureKeyVaultSecret -ResourceId ($resourceIdMatch.Value) -Name ($secretNameMatch.Value)).SecretValueText}
-            "secretvalue" {(Get-AzureureKeyVaultSecret -ResourceId ($resourceIdMatch.Value) -Name ($secretNameMatch.Value)).SecretValue}
+            "secretvaluetext" {(Get-AzureKeyVaultSecret -ResourceId ($resourceIdMatch.Value) -Name ($secretNameMatch.Value)).SecretValueText}
+            "secretvalue" {(Get-AzureKeyVaultSecret -ResourceId ($resourceIdMatch.Value) -Name ($secretNameMatch.Value)).SecretValue}
         }
     }
 
@@ -233,7 +248,7 @@ function ParseResourceMacro {
 
     $ResourceProviders = @("providers/microsoft.keyvault")
 
-    $stringToParse = if($macro.Value.SemiParsed) {$macro.Value.SemiParsed} else {$macro.Value.Unparsed}
+    $stringToParse = if($macro.Value[1]) {$macro.Value[1]} else {$macro.Value[0]}
 
     for ($i=0; $i -lt $ResourceProviders.Count; $i++) {
         
@@ -247,6 +262,8 @@ function ParseResourceMacro {
                     Write-Verbose "Getting Key Vault secret $($stringToParse)"
                     $ErrorMessages = @()
                     $returnValue = GetKeyVaultSecret $stringToParse -ErrorVariable $ErrorMessages -ErrorAction SilentlyContinue
+                    Write-Verbose "Secret type: $($returnValue.GetType())"
+                    
                     if ($ErrorMessages)
                     {
                         Write-Error "Error while trying to retreive value from Key Vault: $($stringToParse)"
@@ -256,7 +273,8 @@ function ParseResourceMacro {
                     }
                 }
             }
-            $macro.Value.Parsed = $returnValue
+
+            $macro.Value[2] = $returnValue
             break
         }
     }
@@ -268,10 +286,10 @@ function ParseMacro {
     )
     Write-Verbose "Parsing globals"
     ParseGlobalMacro ([ref]($macro.Value))
-    #$macro.Value | Format-List * #debug
+    $macro.Value #debug
     Write-Verbose "Parsing resources"
     ParseResourceMacro ([ref]$macro.Value)
-    #$macro.Value | Format-List * #debug
+    $macro.Value #debug
 }
 
 ###############################################################################
